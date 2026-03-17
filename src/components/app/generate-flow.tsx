@@ -372,7 +372,7 @@ export function GenerateFlow({
               <BeforeAfterSlider
                 beforeSrc={originalImage}
                 afterSrc={resultImage}
-                className="max-h-[70vh] w-full"
+                className="aspect-auto max-h-[75vh] w-full"
               />
             </CardContent>
           </Card>
