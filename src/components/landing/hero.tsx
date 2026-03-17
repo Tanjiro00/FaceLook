@@ -5,6 +5,9 @@ import { WaitlistForm } from "@/components/landing/waitlist-form";
 export function Hero() {
   return (
     <section className="relative flex min-h-screen items-center justify-center overflow-hidden bg-zinc-950 px-4 pt-16">
+      {/* Grid */}
+      <div className="bg-grid absolute inset-0" />
+
       {/* Animated gradient blobs */}
       <div className="animate-drift absolute -top-32 left-1/4 h-[500px] w-[500px] rounded-full bg-violet-600/8 blur-[200px]" />
       <div className="animate-drift-reverse absolute bottom-0 right-1/4 h-[400px] w-[400px] rounded-full bg-cyan-600/6 blur-[200px]" />

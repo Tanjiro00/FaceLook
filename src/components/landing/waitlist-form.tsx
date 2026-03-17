@@ -47,7 +47,7 @@ export function WaitlistForm({ source = "landing" }: { source?: string }) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col items-center gap-2">
-      <div className="flex w-full max-w-sm items-center rounded-full border border-white/10 bg-white/5">
+      <div className="flex w-full max-w-sm items-center rounded-full border border-white/10 bg-white/5 transition-all duration-300 focus-within:border-violet-500/40 focus-within:shadow-[0_0_20px_-4px_rgba(139,92,246,0.3)]">
         <input
           type="email"
           value={email}
