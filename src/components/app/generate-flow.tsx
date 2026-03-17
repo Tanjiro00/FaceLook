@@ -9,11 +9,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Progress } from "@/components/ui/progress";
 import { BeforeAfterSlider } from "@/components/shared/before-after-slider";
-import { PROCEDURES } from "@/config/procedures";
+import { PROCEDURES, INTENSITY_CONFIGS } from "@/config/procedures";
 import {
   fileToBase64,
   getImageDimensions,
@@ -49,13 +48,27 @@ export function GenerateFlow({
   const [step, setStep] = useState<Step>("upload");
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [selectedProcedure, setSelectedProcedure] = useState<string | null>(null);
-  const [intensity, setIntensity] = useState(70);
+  const [intensity, setIntensity] = useState<number | null>(null);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [resultProcedureName, setResultProcedureName] = useState("");
 
   const remaining = generationsLimit - generationsUsed;
   const atLimit = remaining <= 0;
+
+  // Get intensity config for selected procedure
+  const intensityConfig = selectedProcedure
+    ? INTENSITY_CONFIGS[selectedProcedure]
+    : null;
+
+  // Current intensity label
+  const currentLabel = intensityConfig?.labels.reduce((closest, l) =>
+    Math.abs(l.value - (intensity ?? intensityConfig.default)) <=
+    Math.abs(closest.value - (intensity ?? intensityConfig.default))
+      ? l
+      : closest
+  );
 
   const handleFileUpload = useCallback(
     async (file: File) => {
@@ -94,6 +107,12 @@ export function GenerateFlow({
     [handleFileUpload]
   );
 
+  const handleSelectProcedure = (procId: string) => {
+    setSelectedProcedure(procId);
+    const config = INTENSITY_CONFIGS[procId];
+    if (config) setIntensity(config.default);
+  };
+
   const handleGenerate = useCallback(async () => {
     if (!originalImage || !selectedProcedure) return;
     if (atLimit) {
@@ -101,11 +120,13 @@ export function GenerateFlow({
       return;
     }
 
+    const proc = PROCEDURES.find((p) => p.id === selectedProcedure);
+    setResultProcedureName(proc?.name ?? "");
+
     setStep("generating");
     setIsGenerating(true);
     setProgress(0);
 
-    // Simulated progress
     const progressInterval = setInterval(() => {
       setProgress((p) => Math.min(p + Math.random() * 15, 90));
     }, 1000);
@@ -117,7 +138,7 @@ export function GenerateFlow({
         body: JSON.stringify({
           procedureId: selectedProcedure,
           imageBase64: originalImage,
-          options: { intensity },
+          options: { intensity: intensity ?? intensityConfig?.default ?? 50 },
         }),
       });
 
@@ -142,12 +163,13 @@ export function GenerateFlow({
     } finally {
       setIsGenerating(false);
     }
-  }, [originalImage, selectedProcedure, intensity, atLimit]);
+  }, [originalImage, selectedProcedure, intensity, intensityConfig, atLimit]);
 
   const handleReset = () => {
     setStep("upload");
     setOriginalImage(null);
     setSelectedProcedure(null);
+    setIntensity(null);
     setResultImage(null);
     setProgress(0);
   };
@@ -232,7 +254,7 @@ export function GenerateFlow({
                     <button
                       key={proc.id}
                       disabled={locked}
-                      onClick={() => setSelectedProcedure(proc.id)}
+                      onClick={() => handleSelectProcedure(proc.id)}
                       className={cn(
                         "flex items-center gap-3 rounded-lg border p-3 text-left transition-all",
                         selectedProcedure === proc.id
@@ -254,25 +276,30 @@ export function GenerateFlow({
                 })}
               </div>
 
-              {/* Intensity slider */}
-              {selectedProcedure && (
+              {/* Procedure-specific intensity */}
+              {selectedProcedure && intensityConfig && intensity !== null && (
                 <div className="mt-6 space-y-3">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium">Intensity</label>
-                    <span className="text-sm text-muted-foreground">
-                      {intensity}%
+                    <label className="text-sm font-medium">
+                      Intensity
+                    </label>
+                    <span className="text-sm font-medium text-primary">
+                      {intensity} {intensityConfig.unit}
+                      {currentLabel ? ` — ${currentLabel.label.split("—").pop()?.split("—").pop()?.trim() || currentLabel.label}` : ""}
                     </span>
                   </div>
                   <Slider
                     value={intensity}
                     onValueChange={(v) => setIntensity(v as number)}
-                    min={10}
-                    max={100}
-                    step={5}
+                    min={intensityConfig.min}
+                    max={intensityConfig.max}
+                    step={intensityConfig.step}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Lower = subtle change · Higher = dramatic result
-                  </p>
+                  {/* Label markers */}
+                  <div className="flex justify-between text-[10px] text-muted-foreground">
+                    <span>{intensityConfig.labels[0]?.label}</span>
+                    <span>{intensityConfig.labels[intensityConfig.labels.length - 1]?.label}</span>
+                  </div>
                 </div>
               )}
 
@@ -337,16 +364,23 @@ export function GenerateFlow({
       {/* Step 4: Result */}
       {step === "result" && originalImage && resultImage && (
         <div className="space-y-6">
-          <BeforeAfterSlider
-            beforeSrc={originalImage}
-            afterSrc={resultImage}
-            className="aspect-[4/3] max-h-[600px]"
-          />
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle>{resultProcedureName}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <BeforeAfterSlider
+                beforeSrc={originalImage}
+                afterSrc={resultImage}
+                className="max-h-[70vh] w-full"
+              />
+            </CardContent>
+          </Card>
 
           <div className="flex flex-wrap justify-center gap-3">
             <Button variant="outline" render={<a href={resultImage} download="facelook-result.jpg" />}>
               <Download className="mr-2 h-4 w-4" />
-              Download Result
+              Download
             </Button>
             <Button variant="outline" onClick={() => setStep("procedure")}>
               <RotateCcw className="mr-2 h-4 w-4" />
@@ -358,12 +392,10 @@ export function GenerateFlow({
             </Button>
           </div>
 
-          {/* Medical disclaimer */}
           <div className="rounded-lg bg-muted/50 p-4 text-center text-xs text-muted-foreground">
             <strong>Disclaimer:</strong> This is an AI-generated visualization
             for informational purposes only. Actual surgical results may vary.
-            Always consult a board-certified medical professional before making
-            any decisions about cosmetic procedures.
+            Always consult a board-certified medical professional.
           </div>
         </div>
       )}

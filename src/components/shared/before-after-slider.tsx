@@ -56,7 +56,7 @@ export function BeforeAfterSlider({
   return (
     <div
       ref={containerRef}
-      className={`relative select-none overflow-hidden rounded-2xl ${className}`}
+      className={`relative select-none overflow-hidden rounded-2xl bg-black ${className}`}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -66,7 +66,7 @@ export function BeforeAfterSlider({
       <img
         src={afterSrc}
         alt={afterLabel}
-        className="block h-full w-full object-cover"
+        className="block h-full w-full object-contain"
         draggable={false}
       />
 
@@ -78,7 +78,7 @@ export function BeforeAfterSlider({
         <img
           src={beforeSrc}
           alt={beforeLabel}
-          className="block h-full w-full object-cover"
+          className="block h-full w-full object-contain"
           style={{ width: containerRef.current?.offsetWidth ?? "100%" }}
           draggable={false}
         />
