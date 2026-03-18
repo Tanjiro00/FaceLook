@@ -53,36 +53,55 @@ export function BeforeAfterSlider({
     setIsDragging(false);
   }, []);
 
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    const step = 2;
+    if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
+      e.preventDefault();
+      setPosition((p) => Math.max(0, p - step));
+    } else if (e.key === "ArrowRight" || e.key === "ArrowUp") {
+      e.preventDefault();
+      setPosition((p) => Math.min(100, p + step));
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      setPosition(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      setPosition(100);
+    }
+  }, []);
+
   return (
     <div
       ref={containerRef}
+      role="slider"
+      aria-label="Drag to compare before and after"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(position)}
+      tabIndex={0}
       className={`relative select-none overflow-hidden rounded-2xl ${className}`}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
+      onKeyDown={handleKeyDown}
       style={{ touchAction: "none" }}
     >
-      {/* After image (full) */}
+      {/* After image (determines container size) */}
       <img
         src={afterSrc}
         alt={afterLabel}
-        className="block h-full w-full object-cover"
+        className="block w-full"
         draggable={false}
       />
 
-      {/* Before image (clipped) */}
-      <div
-        className="absolute inset-0 overflow-hidden"
-        style={{ width: `${position}%` }}
-      >
-        <img
-          src={beforeSrc}
-          alt={beforeLabel}
-          className="block h-full w-full object-cover"
-          style={{ width: containerRef.current?.offsetWidth ?? "100%" }}
-          draggable={false}
-        />
-      </div>
+      {/* Before image (clipped overlay — same size, no scale mismatch) */}
+      <img
+        src={beforeSrc}
+        alt={beforeLabel}
+        className="absolute inset-0 block h-full w-full object-cover"
+        style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}
+        draggable={false}
+      />
 
       {/* Divider line */}
       <div

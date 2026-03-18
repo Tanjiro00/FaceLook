@@ -180,3 +180,44 @@
     linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
   background-size: 72px 72px;
 }
+
+/* Skeleton shimmer effect */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    oklch(1 0 0 / 5%) 25%,
+    oklch(1 0 0 / 10%) 50%,
+    oklch(1 0 0 / 5%) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Respect user motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-drift,
+  .animate-drift-reverse,
+  .animate-gradient,
+  .skeleton-shimmer {
+    animation: none !important;
+  }
+
+  .animate-on-scroll {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}

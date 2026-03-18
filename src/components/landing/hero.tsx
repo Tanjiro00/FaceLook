@@ -30,7 +30,7 @@ export function Hero() {
           <WaitlistForm source="hero" />
         </div>
 
-        <p className="mt-4 text-xs text-zinc-600">
+        <p className="mt-4 text-xs text-zinc-500">
           Free early access · No spam
         </p>
       </div>

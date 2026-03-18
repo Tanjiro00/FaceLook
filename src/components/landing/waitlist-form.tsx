@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, Loader2, Share2 } from "lucide-react";
 
 export function WaitlistForm({ source = "landing" }: { source?: string }) {
   const [email, setEmail] = useState("");
@@ -21,7 +21,7 @@ export function WaitlistForm({ source = "landing" }: { source?: string }) {
       });
       const data = await res.json();
 
-      if (!res.ok && res.status !== 200) {
+      if (!res.ok) {
         setStatus("error");
         setMessage(data.error || "Something went wrong");
         return;
@@ -36,11 +36,36 @@ export function WaitlistForm({ source = "landing" }: { source?: string }) {
     }
   };
 
+  const handleShare = async () => {
+    const shareData = {
+      title: "FaceLook — AI Virtual Try-On",
+      text: "See your cosmetic procedure results before surgery with AI. Check it out:",
+      url: "https://facelook.ai",
+    };
+    if (navigator.share) {
+      await navigator.share(shareData);
+    } else {
+      await navigator.clipboard.writeText(
+        `${shareData.text} ${shareData.url}`
+      );
+      setMessage("Link copied!");
+    }
+  };
+
   if (status === "success") {
     return (
-      <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/5 px-5 py-3">
-        <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-        <span className="text-sm text-emerald-300">{message}</span>
+      <div className="flex flex-col items-center gap-3">
+        <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/5 px-5 py-3">
+          <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+          <span className="text-sm text-emerald-300">{message}</span>
+        </div>
+        <button
+          onClick={handleShare}
+          className="inline-flex items-center gap-1.5 text-xs text-zinc-500 transition-colors hover:text-white"
+        >
+          <Share2 className="h-3 w-3" />
+          Share with friends
+        </button>
       </div>
     );
   }

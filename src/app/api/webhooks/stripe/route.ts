@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getStripeServer } from "@/lib/stripe/server";
 import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
+import { errorResponse } from "@/lib/api/response";
 
 function getSupabaseAdmin() {
   return createClient(
@@ -11,31 +12,36 @@ function getSupabaseAdmin() {
 }
 
 export async function POST(request: NextRequest) {
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    console.error("STRIPE_WEBHOOK_SECRET is not configured");
+    return errorResponse("Server misconfigured", 500);
+  }
+
   const stripe = getStripeServer();
   const supabaseAdmin = getSupabaseAdmin();
 
-  const tierLimits: Record<string, { tier: string; limit: number }> = {
-    [process.env.STRIPE_BASIC_PRICE_ID ?? ""]: { tier: "basic", limit: 30 },
-    [process.env.STRIPE_PREMIUM_PRICE_ID ?? ""]: { tier: "premium", limit: 100 },
-  };
+  const tierLimits: Record<string, { tier: string; limit: number }> = {};
+  if (process.env.STRIPE_BASIC_PRICE_ID) {
+    tierLimits[process.env.STRIPE_BASIC_PRICE_ID] = { tier: "basic", limit: 30 };
+  }
+  if (process.env.STRIPE_PREMIUM_PRICE_ID) {
+    tierLimits[process.env.STRIPE_PREMIUM_PRICE_ID] = { tier: "premium", limit: 100 };
+  }
 
   const body = await request.text();
   const sig = request.headers.get("stripe-signature");
 
   if (!sig) {
-    return NextResponse.json({ error: "Missing signature" }, { status: 400 });
+    return errorResponse("Missing signature", 400);
   }
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(
-      body,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET!
-    );
+    event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
   } catch (err) {
     console.error("Webhook signature verification failed:", err);
-    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
+    return errorResponse("Invalid signature", 400);
   }
 
   switch (event.type) {
@@ -91,6 +97,9 @@ export async function POST(request: NextRequest) {
       console.warn("Payment failed for customer:", invoice.customer);
       break;
     }
+
+    default:
+      console.log(`Unhandled Stripe webhook event: ${event.type}`);
   }
 
   return NextResponse.json({ received: true });

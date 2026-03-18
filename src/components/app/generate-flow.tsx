@@ -50,7 +50,7 @@ export function GenerateFlow({
   const [selectedProcedure, setSelectedProcedure] = useState<string | null>(null);
   const [intensity, setIntensity] = useState<number | null>(null);
   const [resultImage, setResultImage] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [resultProcedureName, setResultProcedureName] = useState("");
 
@@ -206,7 +206,7 @@ export function GenerateFlow({
           </CardHeader>
           <CardContent>
             <div
-              className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border/60 p-12 transition-colors hover:border-primary/50 hover:bg-muted/30"
+              className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border/60 p-8 transition-colors hover:border-primary/50 hover:bg-muted/30 sm:p-12 min-h-[200px]"
               onDragOver={(e) => e.preventDefault()}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
@@ -284,7 +284,7 @@ export function GenerateFlow({
                       Intensity
                     </label>
                     <span className="text-sm font-medium text-primary">
-                      {intensity} {intensityConfig.unit}
+                      {Number(intensity.toFixed(1))} {intensityConfig.unit}
                       {currentLabel ? ` — ${currentLabel.label.split("—").pop()?.split("—").pop()?.trim() || currentLabel.label}` : ""}
                     </span>
                   </div>
@@ -294,6 +294,7 @@ export function GenerateFlow({
                     min={intensityConfig.min}
                     max={intensityConfig.max}
                     step={intensityConfig.step}
+                    aria-label="Procedure intensity"
                   />
                   {/* Label markers */}
                   <div className="flex justify-between text-[10px] text-muted-foreground">
@@ -341,7 +342,7 @@ export function GenerateFlow({
       {/* Step 3: Generating */}
       {step === "generating" && (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
+          <CardContent className="flex flex-col items-center justify-center py-16" role="status" aria-live="polite">
             <Loader2 className="mb-4 h-12 w-12 animate-spin text-primary" />
             <h3 className="text-lg font-semibold">Generating your result...</h3>
             <p className="mb-6 text-sm text-muted-foreground">
@@ -357,6 +358,31 @@ export function GenerateFlow({
                     ? "Enhancing quality..."
                     : "Almost done..."}
             </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-4 text-muted-foreground"
+              onClick={() => {
+                setStep("procedure");
+                setProgress(0);
+              }}
+            >
+              Cancel
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step 4: Result — fallback if result image is missing */}
+      {step === "result" && (!originalImage || !resultImage) && (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <AlertCircle className="mb-4 h-12 w-12 text-muted-foreground" />
+            <h3 className="text-lg font-semibold">Result unavailable</h3>
+            <p className="mb-4 text-sm text-muted-foreground">
+              Something went wrong loading the result.
+            </p>
+            <Button onClick={handleReset}>Start Over</Button>
           </CardContent>
         </Card>
       )}

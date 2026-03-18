@@ -18,7 +18,7 @@ export function TrustBar() {
   return (
     <section className="relative overflow-hidden border-y border-white/5 bg-zinc-950/80 py-6">
       <div className="mx-auto max-w-6xl px-4">
-        <p className="mb-4 text-center text-[11px] font-medium uppercase tracking-[0.2em] text-zinc-600">
+        <p className="mb-4 text-center text-[11px] font-medium uppercase tracking-[0.2em] text-zinc-500">
           Trusted by doctors & clinics worldwide
         </p>
       </div>

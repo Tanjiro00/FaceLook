@@ -3,10 +3,14 @@ import { createClient } from "@/lib/supabase/server";
 import { runPipeline } from "@/lib/ai/pipeline";
 import { generateRequestSchema } from "@/lib/validators/generate";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { errorResponse } from "@/lib/api/response";
 
 export const maxDuration = 60; // Allow up to 60s for AI processing
 
 export async function POST(request: NextRequest) {
+  let userId: string | undefined;
+  let procedureId: string | undefined;
+
   try {
     // 1. Authenticate
     const supabase = await createClient();
@@ -15,42 +19,36 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return errorResponse("Unauthorized", 401);
     }
+    userId = user.id;
 
     // 2. Rate limit
     const { success: withinLimit } = await checkRateLimit(user.id);
     if (!withinLimit) {
-      return NextResponse.json(
-        { error: "Too many requests. Please wait a moment." },
-        { status: 429 }
-      );
+      return errorResponse("Too many requests. Please wait a moment.", 429);
     }
 
     // 3. Validate request body
     const body = await request.json();
     const parsed = generateRequestSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.issues[0].message },
-        { status: 400 }
-      );
+      return errorResponse(parsed.error.issues[0].message, 400);
     }
 
-    // 4. Check generation limits
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("generations_used, generations_limit, subscription_tier")
-      .eq("id", user.id)
-      .single();
+    procedureId = parsed.data.procedureId;
 
-    if (profile && profile.generations_used >= profile.generations_limit) {
-      return NextResponse.json(
-        {
-          error: "Generation limit reached. Please upgrade your plan.",
-          code: "LIMIT_REACHED",
-        },
-        { status: 403 }
+    // 4. Atomically consume one generation slot (check + increment in one call)
+    const { data: consumed, error: consumeError } = await supabase.rpc(
+      "try_consume_generation",
+      { p_user_id: user.id }
+    );
+
+    if (consumeError || !consumed || consumed.length === 0) {
+      return errorResponse(
+        "Generation limit reached. Please upgrade your plan.",
+        403,
+        "LIMIT_REACHED"
       );
     }
 
@@ -95,10 +93,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (insertError || !generation) {
-      return NextResponse.json(
-        { error: "Failed to create generation record" },
-        { status: 500 }
-      );
+      return errorResponse("Failed to create generation record", 500);
     }
 
     // 7. Run AI pipeline
@@ -119,11 +114,6 @@ export async function POST(request: NextRequest) {
       })
       .eq("id", generation.id);
 
-    // 9. Increment usage
-    await supabase.rpc("increment_generations_used", {
-      user_id: user.id,
-    });
-
     return NextResponse.json({
       generationId: generation.id,
       status: "completed",
@@ -131,10 +121,23 @@ export async function POST(request: NextRequest) {
       processingTimeMs: result.processingTimeMs,
     });
   } catch (error) {
-    console.error("Generation error:", error);
-    return NextResponse.json(
-      { error: "Generation failed. Please try again." },
-      { status: 500 }
-    );
+    // Rollback the consumed generation slot on failure
+    if (userId) {
+      try {
+        const supabaseForRollback = await createClient();
+        await supabaseForRollback.rpc("rollback_generation", {
+          p_user_id: userId,
+        });
+      } catch {
+        // Best-effort rollback
+      }
+    }
+
+    console.error("Generation error:", {
+      userId,
+      procedureId,
+      error: error instanceof Error ? error.message : error,
+    });
+    return errorResponse("Generation failed. Please try again.", 500);
   }
 }

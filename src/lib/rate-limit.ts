@@ -29,7 +29,14 @@ export async function checkRateLimit(
   identifier: string
 ): Promise<{ success: boolean; remaining: number }> {
   const rl = getRatelimit();
-  if (!rl) return { success: true, remaining: 999 }; // dev mode bypass
+  if (!rl) {
+    if (process.env.NODE_ENV === "production") {
+      console.warn(
+        "[rate-limit] Upstash not configured — rate limiting disabled in production"
+      );
+    }
+    return { success: true, remaining: 999 };
+  }
 
   const result = await rl.limit(identifier);
   return { success: result.success, remaining: result.remaining };

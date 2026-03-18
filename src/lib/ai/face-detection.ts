@@ -3,6 +3,9 @@
 // Validates selfie before sending to AI pipeline
 // ============================================================
 
+const MIN_IMAGE_DIMENSION = 256;
+const MAX_IMAGE_DIMENSION = 4096;
+
 export interface FaceValidation {
   valid: boolean;
   faceCount: number;
@@ -19,19 +22,19 @@ export function validateImageDimensions(
   width: number,
   height: number
 ): FaceValidation {
-  if (width < 256 || height < 256) {
+  if (width < MIN_IMAGE_DIMENSION || height < MIN_IMAGE_DIMENSION) {
     return {
       valid: false,
       faceCount: 0,
-      error: "Image is too small. Minimum resolution is 256×256.",
+      error: `Image is too small. Minimum resolution is ${MIN_IMAGE_DIMENSION}×${MIN_IMAGE_DIMENSION}.`,
     };
   }
 
-  if (width > 4096 || height > 4096) {
+  if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
     return {
       valid: false,
       faceCount: 0,
-      error: "Image is too large. Maximum resolution is 4096×4096.",
+      error: `Image is too large. Maximum resolution is ${MAX_IMAGE_DIMENSION}×${MAX_IMAGE_DIMENSION}.`,
     };
   }
 

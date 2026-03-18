@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
@@ -11,6 +11,14 @@ export async function middleware(request: NextRequest) {
   response.headers.set(
     "Permissions-Policy",
     "camera=(self), microphone=(), geolocation=()"
+  );
+  response.headers.set(
+    "Strict-Transport-Security",
+    "max-age=63072000; includeSubDomains; preload"
+  );
+  response.headers.set(
+    "Content-Security-Policy",
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.supabase.co https://fal.media; connect-src 'self' https://*.supabase.co https://*.fal.ai https://api.stripe.com; frame-src https://js.stripe.com; font-src 'self';"
   );
 
   return response;

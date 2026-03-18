@@ -25,6 +25,7 @@ export function Navbar() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 flex justify-center px-4 pt-4">
       <nav
+        aria-label="Main navigation"
         className={`flex w-full max-w-5xl items-center justify-between rounded-2xl border px-4 py-2.5 transition-all duration-300 ${
           scrolled
             ? "border-white/10 bg-black/70 backdrop-blur-xl"
@@ -41,7 +42,7 @@ export function Navbar() {
             <a
               key={link.href}
               href={link.href}
-              className="rounded-lg px-3 py-1.5 text-sm text-zinc-500 transition-colors hover:text-white"
+              className="rounded-lg px-3 py-1.5 text-sm text-zinc-400 transition-colors hover:text-white"
             >
               {link.label}
             </a>
@@ -49,19 +50,22 @@ export function Navbar() {
         </div>
 
         <div className="hidden items-center gap-2 md:flex">
-          <Button variant="ghost" className="text-zinc-500 hover:text-white" render={<Link href="/login" />}>
+          <Button variant="ghost" className="text-zinc-400 hover:text-white" render={<Link href="/login" />}>
             Log in
           </Button>
+          {/* Sticky CTA — appears on scroll for conversion */}
           <Link
             href="/signup"
-            className="rounded-full bg-white px-4 py-1.5 text-sm font-medium text-black transition-colors hover:bg-zinc-200"
+            className={`rounded-full bg-white px-4 py-1.5 text-sm font-medium text-black transition-all hover:bg-zinc-200 ${
+              scrolled ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1 pointer-events-none"
+            }`}
           >
             Get started
           </Link>
         </div>
 
         <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger render={<Button variant="ghost" size="icon" className="text-white md:hidden" />}>
+          <SheetTrigger render={<Button variant="ghost" size="icon" className="text-white md:hidden" aria-label="Open menu" />}>
             <Menu className="h-5 w-5" />
           </SheetTrigger>
           <SheetContent side="right" className="w-64 border-white/5 bg-zinc-950">

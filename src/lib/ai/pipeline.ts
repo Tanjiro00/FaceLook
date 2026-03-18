@@ -8,7 +8,16 @@
 // ============================================================
 
 import { fal } from "@fal-ai/client";
+import { z } from "zod";
 import { INTENSITY_CONFIGS } from "@/config/procedures";
+
+const nanoBananaResponseSchema = z.object({
+  images: z.array(z.object({ url: z.string() })).min(1),
+});
+
+const singleImageResponseSchema = z.object({
+  image: z.object({ url: z.string() }).optional(),
+});
 
 fal.config({ credentials: process.env.FAL_KEY! });
 
@@ -33,7 +42,7 @@ function buildPrompt(procedureId: string, intensity: number): string {
 
   const procedurePrompt = config.buildPrompt(intensity);
 
-  return `Edit this photo: ${procedurePrompt} Keep everything else exactly the same — same person, same pose, same background, same lighting, same clothing. Only modify the specified area. The result must look like a real unedited photograph.`;
+  return `${procedurePrompt} IMPORTANT: This is the same person in the same photo. Do NOT change identity, facial features, skin color, hair, pose, background, lighting, clothing, or any other details. Only modify the specified area. The result must be photorealistic and indistinguishable from a real photograph.`;
 }
 
 /**
@@ -54,11 +63,11 @@ async function editWithNanoBanana(
     logs: false,
   });
 
-  const output = result.data as { images?: { url: string }[] };
-  if (!output.images?.[0]?.url) {
-    throw new Error("Nano Banana returned no images");
+  const parsed = nanoBananaResponseSchema.safeParse(result.data);
+  if (!parsed.success) {
+    throw new Error("Nano Banana returned unexpected response format");
   }
-  return output.images[0].url;
+  return parsed.data.images[0].url;
 }
 
 /**
@@ -68,13 +77,13 @@ async function restoreFace(imageUrl: string): Promise<string> {
   const result = await fal.subscribe("fal-ai/codeformer", {
     input: {
       image_url: imageUrl,
-      fidelity: 0.8,
+      fidelity: 0.9,
     },
     logs: false,
   });
 
-  const output = result.data as { image?: { url: string } };
-  return output.image?.url ?? imageUrl;
+  const parsed = singleImageResponseSchema.safeParse(result.data);
+  return parsed.success && parsed.data.image?.url ? parsed.data.image.url : imageUrl;
 }
 
 /**
@@ -89,8 +98,8 @@ async function upscaleHD(imageUrl: string): Promise<string> {
     logs: false,
   });
 
-  const output = result.data as { image?: { url: string } };
-  return output.image?.url ?? imageUrl;
+  const parsed = singleImageResponseSchema.safeParse(result.data);
+  return parsed.success && parsed.data.image?.url ? parsed.data.image.url : imageUrl;
 }
 
 /**
@@ -110,7 +119,7 @@ async function runMockPipeline(input: PipelineInput): Promise<PipelineResult> {
  */
 export async function runPipeline(input: PipelineInput): Promise<PipelineResult> {
   if (!process.env.FAL_KEY || process.env.USE_MOCK_AI === "true") {
-    console.log("[AI Pipeline] Running in MOCK mode");
+    // Mock mode — no real AI calls
     return runMockPipeline(input);
   }
 

@@ -14,7 +14,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { BeforeAfterSlider } from "@/components/shared/before-after-slider";
-import { Download, History, Eye } from "lucide-react";
+import { Download, History, Eye, Wand2 } from "lucide-react";
+import Link from "next/link";
 
 interface Generation {
   id: string;
@@ -35,11 +36,17 @@ export function HistoryContent({ generations }: { generations: Generation[] }) {
         <h1 className="text-2xl font-bold">History</h1>
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
-            <History className="mb-3 h-8 w-8 text-muted-foreground" />
+            <div className="mb-4 rounded-full bg-muted p-4">
+              <History className="h-8 w-8 text-muted-foreground" />
+            </div>
             <p className="font-medium">No generations yet</p>
-            <p className="text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-muted-foreground">
               Your AI-generated results will appear here.
             </p>
+            <Button className="mt-4" render={<Link href="/generate" />}>
+              <Wand2 className="mr-2 h-4 w-4" />
+              Create Your First
+            </Button>
           </CardContent>
         </Card>
       </div>

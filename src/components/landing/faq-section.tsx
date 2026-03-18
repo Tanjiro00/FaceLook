@@ -46,16 +46,20 @@ export function FAQSection() {
               >
                 <button
                   onClick={() => setOpen(isOpen ? null : i)}
+                  aria-expanded={isOpen}
+                  aria-controls={`faq-panel-${i}`}
                   className="flex w-full items-center justify-between px-5 py-4 text-left"
                 >
                   <span className="text-sm font-medium text-white">{faq.q}</span>
                   <ChevronDown
-                    className={`h-4 w-4 shrink-0 text-zinc-600 transition-transform duration-200 ${
+                    className={`h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-200 ${
                       isOpen ? "rotate-180" : ""
                     }`}
                   />
                 </button>
                 <div
+                  id={`faq-panel-${i}`}
+                  role="region"
                   className={`grid transition-all duration-200 ${
                     isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
                   }`}

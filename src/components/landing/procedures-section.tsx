@@ -44,7 +44,7 @@ export function ProceduresSection() {
                       {proc.tier}
                     </span>
                   )}
-                  {!proc.available && <Lock className="h-3.5 w-3.5 text-zinc-600" />}
+                  {!proc.available && <Lock className="h-3.5 w-3.5 text-zinc-500" />}
                 </div>
               </div>
             </div>

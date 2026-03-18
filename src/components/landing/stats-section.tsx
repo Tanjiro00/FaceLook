@@ -20,7 +20,7 @@ export function StatsSection() {
               <div className={`text-3xl font-bold tabular-nums md:text-4xl ${stat.accent}`}>
                 {stat.value}
               </div>
-              <div className="mt-1 text-sm text-zinc-600">{stat.label}</div>
+              <div className="mt-1 text-sm text-zinc-500">{stat.label}</div>
             </div>
           ))}
         </div>

@@ -52,7 +52,7 @@ export function DemoSection() {
               className="aspect-[4/3] rounded-xl"
             />
           </div>
-          <p className="mt-3 text-center text-xs text-zinc-600">
+          <p className="mt-3 text-center text-xs text-zinc-500">
             AI-generated · Not a real patient · For demonstration only
           </p>
         </div>

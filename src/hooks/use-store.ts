@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import type { UserProfile, Generation } from "@/types";
 
 interface AppState {
@@ -26,23 +27,42 @@ interface AppState {
   addGeneration: (g: Generation) => void;
 }
 
-export const useStore = create<AppState>((set) => ({
-  user: null,
-  setUser: (user) => set({ user }),
+export const useStore = create<AppState>()(
+  persist(
+    (set) => ({
+      user: null,
+      setUser: (user) => set({ user }),
 
-  currentImage: null,
-  setCurrentImage: (currentImage) => set({ currentImage }),
-  selectedProcedure: null,
-  setSelectedProcedure: (selectedProcedure) => set({ selectedProcedure }),
-  intensity: 70,
-  setIntensity: (intensity) => set({ intensity }),
-  isGenerating: false,
-  setIsGenerating: (isGenerating) => set({ isGenerating }),
-  lastResult: null,
-  setLastResult: (lastResult) => set({ lastResult }),
+      currentImage: null,
+      setCurrentImage: (currentImage) => set({ currentImage }),
+      selectedProcedure: null,
+      setSelectedProcedure: (selectedProcedure) => set({ selectedProcedure }),
+      intensity: 70,
+      setIntensity: (intensity) => set({ intensity }),
+      isGenerating: false,
+      setIsGenerating: (isGenerating) => set({ isGenerating }),
+      lastResult: null,
+      setLastResult: (lastResult) => set({ lastResult }),
 
-  generations: [],
-  setGenerations: (generations) => set({ generations }),
-  addGeneration: (g) =>
-    set((state) => ({ generations: [g, ...state.generations] })),
-}));
+      generations: [],
+      setGenerations: (generations) => set({ generations }),
+      addGeneration: (g) =>
+        set((state) => ({ generations: [g, ...state.generations] })),
+    }),
+    {
+      name: "facelook-store",
+      partialize: (state) => ({ user: state.user }),
+    }
+  )
+);
+
+// Selectors — avoid unnecessary re-renders
+export const useUser = () => useStore((s) => s.user);
+export const useSetUser = () => useStore((s) => s.setUser);
+export const useIsGenerating = () => useStore((s) => s.isGenerating);
+export const useSetIsGenerating = () => useStore((s) => s.setIsGenerating);
+export const useCurrentImage = () => useStore((s) => s.currentImage);
+export const useSelectedProcedure = () => useStore((s) => s.selectedProcedure);
+export const useIntensity = () => useStore((s) => s.intensity);
+export const useLastResult = () => useStore((s) => s.lastResult);
+export const useGenerations = () => useStore((s) => s.generations);

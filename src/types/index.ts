@@ -39,6 +39,7 @@ export interface UserProfile {
   stripeCustomerId: string | null;
   stripeSubscriptionId: string | null;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface PricingPlan {
