@@ -5,7 +5,7 @@ import { generateRequestSchema } from "@/lib/validators/generate";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { errorResponse } from "@/lib/api/response";
 
-export const maxDuration = 60; // Allow up to 60s for AI processing
+export const maxDuration = 120; // Allow up to 120s for AI pipeline + storage upload
 
 export async function POST(request: NextRequest) {
   let userId: string | undefined;
@@ -104,11 +104,37 @@ export async function POST(request: NextRequest) {
       hdUpscale: parsed.data.options?.hdUpscale,
     });
 
-    // 8. Update generation record
+    // 8. Download result from fal.ai and upload to Supabase Storage (permanent URL)
+    let permanentResultUrl = result.resultImageUrl;
+    try {
+      const imageResponse = await fetch(result.resultImageUrl);
+      if (imageResponse.ok) {
+        const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+        const resultPath = `${user.id}/${Date.now()}-result.jpeg`;
+
+        const { error: resultUploadError } = await supabase.storage
+          .from("generations")
+          .upload(resultPath, imageBuffer, {
+            contentType: "image/jpeg",
+            upsert: false,
+          });
+
+        if (!resultUploadError) {
+          const { data: resultUrlData } = supabase.storage
+            .from("generations")
+            .getPublicUrl(resultPath);
+          permanentResultUrl = resultUrlData.publicUrl;
+        }
+      }
+    } catch {
+      // Fall back to fal.ai URL if upload fails
+    }
+
+    // 9. Update generation record
     await supabase
       .from("generations")
       .update({
-        result_image_url: result.resultImageUrl,
+        result_image_url: permanentResultUrl,
         status: "completed",
         processing_time_ms: result.processingTimeMs,
       })
@@ -117,7 +143,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       generationId: generation.id,
       status: "completed",
-      resultImageUrl: result.resultImageUrl,
+      resultImageUrl: permanentResultUrl,
       processingTimeMs: result.processingTimeMs,
     });
   } catch (error) {

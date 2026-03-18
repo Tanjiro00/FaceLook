@@ -86,20 +86,20 @@ export function BeforeAfterSlider({
       onKeyDown={handleKeyDown}
       style={{ touchAction: "none" }}
     >
-      {/* After image (determines container size) */}
+      {/* Before image (original — determines container size) */}
       <img
-        src={afterSrc}
-        alt={afterLabel}
+        src={beforeSrc}
+        alt={beforeLabel}
         className="block w-full"
         draggable={false}
       />
 
-      {/* Before image (clipped overlay — same size, no scale mismatch) */}
+      {/* After image (result — absolute overlay, clipped from left) */}
       <img
-        src={beforeSrc}
-        alt={beforeLabel}
+        src={afterSrc}
+        alt={afterLabel}
         className="absolute inset-0 block h-full w-full object-cover"
-        style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}
+        style={{ clipPath: `inset(0 0 0 ${position}%)` }}
         draggable={false}
       />
 
