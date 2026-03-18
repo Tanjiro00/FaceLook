@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getStripeServer } from "@/lib/stripe/server";
 import { z } from "zod";
 import { errorResponse } from "@/lib/api/response";
+import { getPostHogServer } from "@/lib/analytics/posthog-server";
 
 const checkoutSchema = z.object({
   priceId: z.string().min(1, "Price ID is required"),
@@ -55,6 +56,12 @@ export async function POST(request: NextRequest) {
       success_url: `${request.nextUrl.origin}/dashboard?checkout=success`,
       cancel_url: `${request.nextUrl.origin}/dashboard?checkout=cancelled`,
       metadata: { user_id: user.id },
+    });
+
+    getPostHogServer()?.capture({
+      distinctId: user.id,
+      event: "checkout_started",
+      properties: { price_id: parsed.data.priceId },
     });
 
     return NextResponse.json({ url: session.url });

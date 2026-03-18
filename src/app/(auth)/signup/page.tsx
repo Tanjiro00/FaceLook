@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/card";
 import { Sparkles, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
+import { trackSignupStarted, trackSignupCompleted } from "@/lib/analytics/events";
 
 const benefits = [
   "3 free AI generations",
@@ -33,6 +34,7 @@ export default function SignUpPage() {
   async function handleSignUp(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
+    trackSignupStarted("email");
 
     const supabase = createClient();
     const { error } = await supabase.auth.signUp({
@@ -49,11 +51,13 @@ export default function SignUpPage() {
       return;
     }
 
+    trackSignupCompleted();
     toast.success("Check your email to confirm your account!");
     router.push("/login");
   }
 
   async function handleGoogleSignUp() {
+    trackSignupStarted("google");
     const supabase = createClient();
     await supabase.auth.signInWithOAuth({
       provider: "google",

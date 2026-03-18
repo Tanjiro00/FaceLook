@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
+import { PostHogProvider } from "@/components/analytics/posthog-provider";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -62,7 +64,11 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <Suspense fallback={null}>
+            <PostHogProvider>
+              {children}
+            </PostHogProvider>
+          </Suspense>
           <Toaster richColors position="bottom-right" />
         </ThemeProvider>
       </body>

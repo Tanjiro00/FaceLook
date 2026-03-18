@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ArrowRight, CheckCircle2, Loader2, Share2 } from "lucide-react";
+import { trackWaitlistSignup } from "@/lib/analytics/events";
 
 export function WaitlistForm({ source = "landing" }: { source?: string }) {
   const [email, setEmail] = useState("");
@@ -30,6 +31,7 @@ export function WaitlistForm({ source = "landing" }: { source?: string }) {
       setStatus("success");
       setMessage(data.message);
       setEmail("");
+      trackWaitlistSignup(source);
     } catch {
       setStatus("error");
       setMessage("Something went wrong. Please try again.");

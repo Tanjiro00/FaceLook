@@ -13,6 +13,8 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Wand2, TrendingUp, Zap } from "lucide-react";
+import { useEffect } from "react";
+import { identifyUser, trackUpgradeClicked } from "@/lib/analytics/events";
 
 interface DashboardContentProps {
   user: User;
@@ -39,6 +41,15 @@ export function DashboardContent({
   const used = profile?.generations_used ?? 0;
   const limit = profile?.generations_limit ?? 3;
   const usagePercent = limit > 0 ? (used / limit) * 100 : 0;
+
+  useEffect(() => {
+    identifyUser(user.id, {
+      email: user.email,
+      subscription_tier: tier,
+      generations_used: used,
+      generations_limit: limit,
+    });
+  }, [user.id, user.email, tier, used, limit]);
 
   return (
     <div className="space-y-6">
@@ -103,7 +114,7 @@ export function DashboardContent({
                 </p>
               </div>
             </div>
-            <Button size="sm" render={<Link href="/dashboard?tab=billing" />}>
+            <Button size="sm" onClick={() => trackUpgradeClicked("dashboard_cta", tier)} render={<Link href="/dashboard?tab=billing" />}>
               Upgrade
             </Button>
           </CardContent>

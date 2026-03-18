@@ -30,6 +30,15 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import {
+  trackImageUploaded,
+  trackProcedureSelected,
+  trackGenerationStarted,
+  trackGenerationCompleted,
+  trackGenerationFailed,
+  trackGenerationCancelled,
+  trackDownloadResult,
+} from "@/lib/analytics/events";
 
 interface GenerateFlowProps {
   tier: string;
@@ -94,6 +103,7 @@ export function GenerateFlow({
       const base64 = await fileToBase64(file);
       setOriginalImage(base64);
       setStep("procedure");
+      trackImageUploaded();
     },
     []
   );
@@ -111,6 +121,7 @@ export function GenerateFlow({
     setSelectedProcedure(procId);
     const config = INTENSITY_CONFIGS[procId];
     if (config) setIntensity(config.default);
+    trackProcedureSelected(procId);
   };
 
   const handleGenerate = useCallback(async () => {
@@ -126,6 +137,7 @@ export function GenerateFlow({
     setStep("generating");
     setIsGenerating(true);
     setProgress(0);
+    trackGenerationStarted(selectedProcedure, intensity ?? intensityConfig?.default ?? 50);
 
     const progressInterval = setInterval(() => {
       setProgress((p) => Math.min(p + Math.random() * 15, 90));
@@ -153,11 +165,13 @@ export function GenerateFlow({
       setProgress(100);
       setResultImage(data.resultImageUrl);
       setStep("result");
+      trackGenerationCompleted(selectedProcedure, data.processingTimeMs ?? 0);
       toast.success(
         `Done in ${((data.processingTimeMs ?? 0) / 1000).toFixed(1)}s`
       );
     } catch (err) {
       clearInterval(progressInterval);
+      trackGenerationFailed(selectedProcedure, err instanceof Error ? err.message : "Unknown error");
       toast.error(err instanceof Error ? err.message : "Generation failed");
       setStep("procedure");
     } finally {
@@ -363,6 +377,7 @@ export function GenerateFlow({
               size="sm"
               className="mt-4 text-muted-foreground"
               onClick={() => {
+                trackGenerationCancelled(selectedProcedure ?? "unknown");
                 setStep("procedure");
                 setProgress(0);
               }}
@@ -404,7 +419,7 @@ export function GenerateFlow({
           </Card>
 
           <div className="flex flex-wrap justify-center gap-3">
-            <Button variant="outline" render={<a href={resultImage} download="facelook-result.jpg" />}>
+            <Button variant="outline" onClick={() => trackDownloadResult(selectedProcedure ?? "")} render={<a href={resultImage} download="facelook-result.jpg" />}>
               <Download className="mr-2 h-4 w-4" />
               Download
             </Button>

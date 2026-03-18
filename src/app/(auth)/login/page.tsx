@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/card";
 import { Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { trackLogin, identifyUser } from "@/lib/analytics/events";
 
 export default function LoginPage() {
   return (
@@ -51,11 +52,14 @@ function LoginForm() {
       return;
     }
 
+    trackLogin("email");
+    identifyUser(email);
     router.push(redirect);
     router.refresh();
   }
 
   async function handleGoogleLogin() {
+    trackLogin("google");
     const supabase = createClient();
     await supabase.auth.signInWithOAuth({
       provider: "google",

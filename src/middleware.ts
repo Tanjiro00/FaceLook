@@ -18,7 +18,7 @@ export async function middleware(request: NextRequest) {
   );
   response.headers.set(
     "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.supabase.co https://fal.media; connect-src 'self' https://*.supabase.co https://*.fal.ai https://api.stripe.com; frame-src https://js.stripe.com; font-src 'self';"
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://us-assets.i.posthog.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.supabase.co https://fal.media; connect-src 'self' https://*.supabase.co https://*.fal.ai https://api.stripe.com https://us.i.posthog.com https://us-assets.i.posthog.com; frame-src https://js.stripe.com; font-src 'self';"
   );
 
   return response;
